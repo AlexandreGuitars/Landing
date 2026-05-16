@@ -1280,47 +1280,57 @@ footer {
       <div class="contato-form reveal">
         <h3>Pedir orçamento</h3>
         <p style="font-size:14px;color:var(--cream-dim);line-height:1.8;margin-bottom:1.5rem;">
-          Preencha o formulário e enviaremos uma resposta para o seu e-mail em até 24 horas.
+          Preencha o formulário e entraremos em contato em até 24 horas.
         </p>
 
-        <div id="form-status" style="display:none;padding:12px 16px;border-radius:4px;margin-bottom:1rem;font-family:'Special Elite',monospace;font-size:13px;"></div>
+        <form action="https://formspree.io/f/xdabqpkk" method="POST">
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Seu nome *</label>
-            <input type="text" id="f-nome" placeholder="Nome completo">
+          <input type="hidden" name="_subject" value="Novo orçamento — Alexandre Guitars">
+          <input type="hidden" name="_next" value="http://alexandreguitars.com.br/?enviado=1">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Seu nome *</label>
+              <input type="text" name="nome" placeholder="Nome completo" required>
+            </div>
+            <div class="form-group">
+              <label>WhatsApp *</label>
+              <input type="tel" name="telefone" placeholder="(11) 99339-4130" required>
+            </div>
           </div>
+
           <div class="form-group">
-            <label>WhatsApp *</label>
-            <input type="tel" id="f-tel" placeholder="(11) 99339-4130">
+            <label>E-mail *</label>
+            <input type="email" name="email" placeholder="seu@email.com" required>
           </div>
-        </div>
-        <div class="form-group">
-          <label>E-mail *</label>
-          <input type="email" id="f-email" placeholder="seu@email.com">
-        </div>
-        <div class="form-group">
-          <label>Instrumento</label>
-          <select id="f-inst">
-            <option value="">Selecione...</option>
-            <option>Guitarra elétrica</option>
-            <option>Violão aço</option>
-            <option>Violão nylon</option>
-            <option>Baixo elétrico</option>
-            <option>Semi-acústica</option>
-            <option>Outro</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Marca e modelo (se souber)</label>
-          <input type="text" id="f-modelo" placeholder="Ex: Tagima TG-530">
-        </div>
-        <div class="form-group">
-          <label>Descreva o problema ou serviço *</label>
-          <textarea id="f-msg" placeholder="Ex: Minha guitarra está com fret buzz e a ação está muito alta..."></textarea>
-        </div>
-        <button class="form-submit" onclick="submitForm(this)">Enviar mensagem</button>
-        <div class="form-note">Respondo em até 24h · Orçamento sempre gratuito</div>
+
+          <div class="form-group">
+            <label>Instrumento</label>
+            <select name="instrumento">
+              <option value="">Selecione...</option>
+              <option>Guitarra elétrica</option>
+              <option>Violão aço</option>
+              <option>Violão nylon</option>
+              <option>Baixo elétrico</option>
+              <option>Semi-acústica</option>
+              <option>Outro</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Marca e modelo (se souber)</label>
+            <input type="text" name="modelo" placeholder="Ex: Tagima TG-530">
+          </div>
+
+          <div class="form-group">
+            <label>Descreva o problema ou serviço *</label>
+            <textarea name="mensagem" placeholder="Ex: Minha guitarra está com fret buzz e a ação está muito alta..." required></textarea>
+          </div>
+
+          <button type="submit" class="form-submit">Enviar mensagem</button>
+          <div class="form-note">Respondo em até 24h · Orçamento sempre gratuito</div>
+
+        </form>
       </div>
     </div>
   </div>
@@ -1378,64 +1388,7 @@ window.addEventListener('scroll', () => {
   nav.style.borderBottomColor = window.scrollY > 50 ? 'rgba(74,46,18,0.6)' : 'rgba(46,26,8,1)';
 });
 
-// ── FORM SUBMIT via Formspree ──
-async function submitForm(btn) {
-  const nome  = document.getElementById('f-nome').value.trim();
-  const tel   = document.getElementById('f-tel').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const inst  = document.getElementById('f-inst').value;
-  const modelo= document.getElementById('f-modelo').value.trim();
-  const msg   = document.getElementById('f-msg').value.trim();
-  const status= document.getElementById('form-status');
-
-  if (!nome || !tel || !email || !msg) {
-    status.style.display = 'block';
-    status.style.background = 'rgba(200,81,26,0.15)';
-    status.style.border = '0.5px solid var(--burnt)';
-    status.style.color = '#f0e6d0';
-    status.textContent = '⚠️ Preencha os campos obrigatórios: nome, WhatsApp, e-mail e descrição.';
-    return;
-  }
-
-  btn.textContent = 'Enviando...';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch('https://formspree.io/f/xdabqpkk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        nome, telefone: tel, email,
-        instrumento: inst || 'Não informado',
-        modelo: modelo || 'Não informado',
-        mensagem: msg,
-        _replyto: email,
-        _subject: 'Novo orçamento — Alexandre Guitars · ' + (inst || 'Instrumento não informado'),
-      })
-    });
-
-    if (res.ok) {
-      status.style.display = 'block';
-      status.style.background = 'rgba(93,202,165,0.12)';
-      status.style.border = '0.5px solid #5DCAA5';
-      status.style.color = '#5DCAA5';
-      status.textContent = '✦ Mensagem enviada! Retorno em até 24 horas.';
-      ['f-nome','f-tel','f-email','f-modelo','f-msg'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('f-inst').selectedIndex = 0;
-      btn.textContent = '✓ Enviado!';
-    } else {
-      throw new Error('Erro no envio');
-    }
-  } catch(e) {
-    // Fallback: abre WhatsApp com os dados
-    status.style.display = 'block';
-    status.style.background = 'rgba(200,81,26,0.12)';
-    status.style.border = '0.5px solid var(--burnt)';
-    status.style.color = '#f0e6d0';
-    status.innerHTML = `⚠️ Erro ao enviar. <a href="https://wa.me/5511993394130?text=${encodeURIComponent('Olá! Quero solicitar um orçamento.\n\nNome: '+nome+'\nInstrumento: '+(inst||'')+' '+(modelo||'')+'\n\n'+msg)}" target="_blank" style="color:var(--amber);">Clique aqui para enviar pelo WhatsApp</a>.`;    btn.textContent = 'Enviar mensagem';
-    btn.disabled = false;
-  }
-}
+// Form handled via native HTML POST to Formspree
 </script>
 </body>
 </html>
