@@ -252,7 +252,7 @@ nav {
   animation: fadeUp 0.8s ease forwards 0.9s;
 }
 
-.hero-actions {
+.hero-açãos {
   display: flex;
   gap: 12px;
   justify-content: center;
@@ -667,42 +667,7 @@ section { padding: 6rem 2rem; }
 .inst-icon { font-size: 28px; margin-bottom: 10px; display: block; }
 .inst-name { font-family: 'Special Elite', monospace; font-size: 11px; letter-spacing: 0.08em; color: var(--cream-dim); }
 
-/* ── DEPOIMENTOS ── */
-.depoimentos { background: var(--bg); }
-
-.dep-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 3rem;
-}
-.dep-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: 2px;
-  padding: 1.75rem;
-  position: relative;
-  transition: border-color 0.2s;
-}
-.dep-card:hover { border-color: var(--burnt); }
-.dep-card::before {
-  content: '"';
-  position: absolute;
-  top: 12px;
-  left: 16px;
-  font-family: 'Libre Baskerville', serif;
-  font-size: 64px;
-  color: var(--burnt);
-  opacity: 0.2;
-  line-height: 1;
-  pointer-events: none;
-}
-.dep-stars { color: var(--amber); font-size: 12px; margin-bottom: 12px; letter-spacing: 2px; }
-.dep-text { font-size: 13px; color: var(--cream-dim); line-height: 1.8; margin-bottom: 16px; font-style: italic; }
-.dep-author { display: flex; align-items: center; gap: 10px; border-top: 0.5px solid var(--border); padding-top: 12px; }
-.dep-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); border: 0.5px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', monospace; font-size: 13px; color: var(--burnt); flex-shrink: 0; }
-.dep-name { font-family: 'Special Elite', monospace; font-size: 11px; color: var(--cream); letter-spacing: 0.06em; }
-.dep-inst { font-size: 10px; color: var(--muted); font-family: 'Courier Prime', monospace; }
+/* depoimentos CSS removed */
 
 /* ── CONTATO ── */
 .contato {
@@ -908,10 +873,47 @@ footer {
   .inst-grid { grid-template-columns: repeat(2, 1fr); }
   .steps { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .hero-actions { flex-direction: column; align-items: center; }
+  .hero-açãos { flex-direction: column; align-items: center; }
   .sobre-vals { grid-template-columns: 1fr; }
   .dif-visual { display: none; }
 }
+
+/* ── ORC LINK CARD ── */
+.orc-link-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--surface2);
+  border: 0.5px solid var(--burnt);
+  border-radius: 4px;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s;
+}
+.orc-link-card:hover { background: var(--near-blk); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,81,26,0.2); }
+.orc-link-icon { font-size: 28px; flex-shrink: 0; }
+.orc-link-content { flex: 1; }
+.orc-link-title { font-family: 'Special Elite', monospace; font-size: 15px; color: var(--cream); letter-spacing: 0.04em; margin-bottom: 4px; }
+.orc-link-desc { font-size: 11px; color: var(--muted); font-family: 'Courier Prime', monospace; }
+.orc-link-arrow { font-size: 20px; color: var(--burnt); font-family: 'Special Elite', monospace; }
+.orc-divider { display: flex; align-items: center; gap: 12px; margin: 1.25rem 0; }
+.orc-divider::before, .orc-divider::after { content: ''; flex: 1; height: 0.5px; background: var(--border2); }
+.orc-divider span { font-family: 'Special Elite', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+
+  /* ── FORM STYLES ── */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display:block; font-family:'Special Elite',monospace; font-size:8px; letter-spacing:0.18em; color:var(--muted); text-transform:uppercase; margin-bottom:5px; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; background:var(--bg); border:0.5px solid var(--border2); border-radius:2px; color:var(--cream); font-family:'Libre Baskerville',serif; font-size:13px; padding:10px 12px; outline:none; transition:border-color 0.2s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--burnt); }
+  .form-group textarea { resize:vertical; min-height:100px; }
+  .form-group select option { background:var(--surface); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form-submit { width:100%; background:var(--burnt); color:var(--cream); font-family:'Special Elite',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; padding:14px; border:none; border-radius:2px; cursor:pointer; transition:all 0.2s; margin-top:4px; }
+  .form-submit:hover { background:var(--amber); color:var(--near-blk); }
+  .form-submit:disabled { opacity:0.6; cursor:default; }
+  .form-note { font-size:10px; color:var(--muted); margin-top:8px; text-align:center; font-family:'Courier Prime',monospace; }
+  @media(max-width:640px){ .form-row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -926,7 +928,7 @@ footer {
     <li><a href="#sobre">Sobre</a></li>
     <li><a href="#servicos">Serviços</a></li>
     <li><a href="#processo">Como funciona</a></li>
-    <li><a href="#depoimentos">Depoimentos</a></li>
+    
     <li><a href="#contato" class="nav-cta">Pedir orçamento</a></li>
   </ul>
   <div class="hamburger" id="hamburger" onclick="toggleMenu()">
@@ -938,7 +940,7 @@ footer {
   <a href="#sobre" onclick="toggleMenu()">Sobre</a>
   <a href="#servicos" onclick="toggleMenu()">Serviços</a>
   <a href="#processo" onclick="toggleMenu()">Como funciona</a>
-  <a href="#depoimentos" onclick="toggleMenu()">Depoimentos</a>
+  
   <a href="#contato" onclick="toggleMenu()">Pedir orçamento →</a>
 </div>
 
@@ -964,8 +966,8 @@ footer {
       Reparo · Customização · Manutenção<br>
       de instrumentos de corda com cuidado artesanal
     </div>
-    <div class="hero-actions">
-      <a href="https://wa.me/5511999999999" class="btn-primary" target="_blank">💬 Pedir orçamento</a>
+    <div class="hero-açãos">
+      <a href="https://wa.me/5511993394130" class="btn-primary" target="_blank">💬 Pedir orçamento</a>
       <a href="#servicos" class="btn-secondary">Ver serviços</a>
     </div>
   </div>
@@ -992,7 +994,7 @@ footer {
       <div class="sobre-text reveal">
         <div class="section-label">Sobre</div>
         <h2 class="section-title">O ofício<br>de cuidar<br>do seu som</h2>
-        <p>Sou <strong>Alexandre</strong>, luthier especializado em reparo e manutenção de instrumentos de corda em São Paulo. Trabalho com atenção artesanal que as grandes assistências técnicas não conseguem oferecer.</p>
+        <p>Sou <strong>Felipe Alexandre</strong>, guitarrista e luthier, faço reparos e manutenções de instrumentos de corda em São Paulo. Trabalho com atenção artesanal.</p>
         <p>Cada instrumento que chega na minha oficina é tratado como único — com diagnóstico honesto, orçamento transparente e entrega dentro do prazo combinado.</p>
         <p>Acredito que um instrumento bem cuidado toca melhor, soa melhor e dura gerações.</p>
         <div class="sobre-vals">
@@ -1037,9 +1039,9 @@ footer {
         <div class="srv-name">Setup & Regulagem</div>
         <div class="srv-desc">O serviço mais solicitado. Deixa o instrumento tocando no seu melhor.</div>
         <ul class="srv-items">
-          <li>Ajuste de action (altura das cordas)</li>
-          <li>Calibração de intonação</li>
-          <li>Regulagem do truss rod</li>
+          <li>Ajuste de ação (altura das cordas)</li>
+          <li>Entonação</li>
+          <li>Regulagem do tensor</li>
           <li>Lubrificação de tarraxas e pestana</li>
           <li>Troca de cordas</li>
         </ul>
@@ -1089,7 +1091,7 @@ footer {
         <div class="srv-name">Limpeza & Conservação</div>
         <div class="srv-desc">Manutenção preventiva que preserva o instrumento e evita reparos maiores.</div>
         <ul class="srv-items">
-          <li>Limpeza profunda do espelho</li>
+          <li>Limpeza profunda do escudo</li>
           <li>Condicionamento da madeira</li>
           <li>Polimento do corpo</li>
           <li>Revisão semestral completa</li>
@@ -1104,7 +1106,7 @@ footer {
         <ul class="srv-items">
           <li>Troca de hardware</li>
           <li>Upgrade de tarraxas</li>
-          <li>Instalação de pickguard</li>
+          <li>Instalação de escudo</li>
           <li>Acabamentos personalizados</li>
           <li>Consultar disponibilidade</li>
         </ul>
@@ -1112,7 +1114,7 @@ footer {
     </div>
     <div class="srv-cta reveal">
       <p>Não encontrou o que precisa? Entre em contato — avalio qualquer instrumento de corda.</p>
-      <a href="https://wa.me/5511999999999" class="btn-primary" target="_blank">💬 Falar com o Alexandre</a>
+      <a href="https://wa.me/5511993394130" class="btn-primary" target="_blank">💬 Entrar em contato</a>
     </div>
   </div>
 </section>
@@ -1220,54 +1222,9 @@ footer {
     <div class="inst-grid">
       <div class="inst-card reveal"><span class="inst-icon">🎸</span><div class="inst-name">Guitarra Elétrica</div></div>
       <div class="inst-card reveal"><span class="inst-icon">🪕</span><div class="inst-name">Violão Aço</div></div>
-      <div class="inst-card reveal"><span class="inst-icon">🎻</span><div class="inst-name">Violão Nylon</div></div>
-      <div class="inst-card reveal"><span class="inst-icon">🎵</span><div class="inst-name">Baixo Elétrico</div></div>
-      <div class="inst-card reveal"><span class="inst-icon">🎶</span><div class="inst-name">Semi-Acústica</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- DEPOIMENTOS -->
-<section class="depoimentos" id="depoimentos">
-  <div class="container">
-    <div class="reveal">
-      <div class="section-label">Depoimentos</div>
-      <h2 class="section-title">O que dizem<br>os clientes</h2>
-    </div>
-    <div class="dep-grid">
-      <div class="dep-card reveal">
-        <div class="dep-stars">★★★★★</div>
-        <div class="dep-text">Minha guitarra estava com fret buzz terrível. O Alexandre fez o nivelamento dos trastes e ficou perfeita. Nunca tocou tão bem desde que comprei.</div>
-        <div class="dep-author">
-          <div class="dep-avatar">M</div>
-          <div>
-            <div class="dep-name">Marcos A.</div>
-            <div class="dep-inst">Guitarrista · Tagima T-635</div>
-          </div>
-        </div>
-      </div>
-      <div class="dep-card reveal">
-        <div class="dep-stars">★★★★★</div>
-        <div class="dep-text">Profissionalismo do início ao fim. Recebi fotos de tudo que foi feito, prazo cumprido e o violão voltou limpo e afinado. Recomendo demais.</div>
-        <div class="dep-author">
-          <div class="dep-avatar">C</div>
-          <div>
-            <div class="dep-name">Carolina F.</div>
-            <div class="dep-inst">Violonista · Giannini GF-1A</div>
-          </div>
-        </div>
-      </div>
-      <div class="dep-card reveal">
-        <div class="dep-stars">★★★★★</div>
-        <div class="dep-text">Meu baixo estava com problema elétrico que ninguém conseguia resolver. O Alexandre diagnosticou em minutos e resolveu no mesmo dia. Incrível.</div>
-        <div class="dep-author">
-          <div class="dep-avatar">R</div>
-          <div>
-            <div class="dep-name">Rafael S.</div>
-            <div class="dep-inst">Baixista · Strinberg LB-5</div>
-          </div>
-        </div>
-      </div>
+      <div class="inst-card reveal"><span class="inst-icon">🎸</span><div class="inst-name">Violão Nylon</div></div>
+      <div class="inst-card reveal"><span class="inst-icon">🎸</span><div class="inst-name">Baixo Elétrico</div></div>
+      <div class="inst-card reveal"><span class="inst-icon">🎸</span><div class="inst-name">Semi-Acústica</div></div>
     </div>
   </div>
 </section>
@@ -1282,32 +1239,32 @@ footer {
         <p>Entre em contato pelo WhatsApp ou pelo formulário ao lado. O diagnóstico e o orçamento são sempre gratuitos e sem compromisso.</p>
 
         <div class="contato-items">
-          <a href="https://wa.me/5511999999999" class="contato-item" target="_blank">
+          <a href="https://wa.me/5511993394130" class="contato-item" target="_blank">
             <div class="c-icon">💬</div>
             <div>
               <div class="c-label">WhatsApp</div>
-              <div class="c-value">(11) 99999-9999</div>
+              <div class="c-value">(11) 99339-4130</div>
             </div>
           </a>
-          <a href="https://instagram.com/alexandreguitars" class="contato-item" target="_blank">
+          <a href="https://www.instagram.com/alexandreguitarsluthieria?igsh=MTd5N3Z1OWl3amdjaw==" class="contato-item" target="_blank">
             <div class="c-icon">📸</div>
             <div>
               <div class="c-label">Instagram</div>
-              <div class="c-value">@alexandreguitars</div>
+              <div class="c-value">@alexandreguitarsluthieria</div>
             </div>
           </a>
-          <a href="mailto:contato@alexandreguitars.com" class="contato-item">
+          <a href="mailto:contato@alexandreguitars.com.br" class="contato-item">
             <div class="c-icon">✉️</div>
             <div>
               <div class="c-label">E-mail</div>
-              <div class="c-value">contato@alexandreguitars.com</div>
+              <div class="c-value">contato@alexandreguitars.com.br</div>
             </div>
           </a>
           <div class="contato-item" style="cursor:default;">
             <div class="c-icon">📍</div>
             <div>
-              <div class="c-label">Localização</div>
-              <div class="c-value">São Paulo, SP</div>
+              <div class="c-label">Endereço</div>
+              <div class="c-value">Lapa — São Paulo, SP</div>
             </div>
           </div>
         </div>
@@ -1322,19 +1279,29 @@ footer {
 
       <div class="contato-form reveal">
         <h3>Pedir orçamento</h3>
+        <p style="font-size:14px;color:var(--cream-dim);line-height:1.8;margin-bottom:1.5rem;">
+          Preencha o formulário e enviaremos uma resposta para o seu e-mail em até 24 horas.
+        </p>
+
+        <div id="form-status" style="display:none;padding:12px 16px;border-radius:4px;margin-bottom:1rem;font-family:'Special Elite',monospace;font-size:13px;"></div>
+
         <div class="form-row">
           <div class="form-group">
-            <label>Seu nome</label>
-            <input type="text" placeholder="Nome completo">
+            <label>Seu nome *</label>
+            <input type="text" id="f-nome" placeholder="Nome completo">
           </div>
           <div class="form-group">
-            <label>WhatsApp</label>
-            <input type="tel" placeholder="(11) 99999-9999">
+            <label>WhatsApp *</label>
+            <input type="tel" id="f-tel" placeholder="(11) 99339-4130">
           </div>
         </div>
         <div class="form-group">
+          <label>E-mail *</label>
+          <input type="email" id="f-email" placeholder="seu@email.com">
+        </div>
+        <div class="form-group">
           <label>Instrumento</label>
-          <select>
+          <select id="f-inst">
             <option value="">Selecione...</option>
             <option>Guitarra elétrica</option>
             <option>Violão aço</option>
@@ -1346,13 +1313,13 @@ footer {
         </div>
         <div class="form-group">
           <label>Marca e modelo (se souber)</label>
-          <input type="text" placeholder="Ex: Tagima TG-530">
+          <input type="text" id="f-modelo" placeholder="Ex: Tagima TG-530">
         </div>
         <div class="form-group">
-          <label>Descreva o problema ou serviço</label>
-          <textarea placeholder="Ex: Minha guitarra está com fret buzz nas casas mais agudas, e a ação está muito alta..."></textarea>
+          <label>Descreva o problema ou serviço *</label>
+          <textarea id="f-msg" placeholder="Ex: Minha guitarra está com fret buzz e a ação está muito alta..."></textarea>
         </div>
-        <button class="form-submit" onclick="submitForm(this)">Enviar pedido de orçamento</button>
+        <button class="form-submit" onclick="submitForm(this)">Enviar mensagem</button>
         <div class="form-note">Respondo em até 24h · Orçamento sempre gratuito</div>
       </div>
     </div>
@@ -1372,17 +1339,17 @@ footer {
     <a href="#sobre">Sobre</a>
     <a href="#servicos">Serviços</a>
     <a href="#processo">Como funciona</a>
-    <a href="#depoimentos">Depoimentos</a>
+    
     <a href="#contato">Contato</a>
   </div>
   <div class="footer-copy">
     © 2026 Alexandre Guitars · Reparo, Customização e Manutenção · São Paulo, SP<br>
-    @alexandreguitars · contato@alexandreguitars.com
+    @alexandreguitarsluthieria · contato@alexandreguitars.com.br
   </div>
 </footer>
 
 <!-- WHATSAPP FLOAT -->
-<a class="wa-float" href="https://wa.me/5511999999999" target="_blank" title="Falar no WhatsApp">💬</a>
+<a class="wa-float" href="https://wa.me/5511993394130" target="_blank" title="Falar no WhatsApp">💬</a>
 
 <script>
 // Mobile menu
@@ -1411,37 +1378,63 @@ window.addEventListener('scroll', () => {
   nav.style.borderBottomColor = window.scrollY > 50 ? 'rgba(74,46,18,0.6)' : 'rgba(46,26,8,1)';
 });
 
-// Form submit
-function submitForm(btn) {
-  const name = document.querySelector('input[type=text]').value;
-  const tel  = document.querySelector('input[type=tel]').value;
-  const inst = document.querySelector('select').value;
-  const prob = document.querySelector('textarea').value;
+// ── FORM SUBMIT via Formspree ──
+async function submitForm(btn) {
+  const nome  = document.getElementById('f-nome').value.trim();
+  const tel   = document.getElementById('f-tel').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const inst  = document.getElementById('f-inst').value;
+  const modelo= document.getElementById('f-modelo').value.trim();
+  const msg   = document.getElementById('f-msg').value.trim();
+  const status= document.getElementById('form-status');
 
-  if (!name || !tel) {
-    btn.textContent = '⚠️ Preencha nome e WhatsApp';
-    btn.style.background = '#8B3A0A';
-    setTimeout(() => {
-      btn.textContent = 'Enviar pedido de orçamento';
-      btn.style.background = '';
-    }, 2500);
+  if (!nome || !tel || !email || !msg) {
+    status.style.display = 'block';
+    status.style.background = 'rgba(200,81,26,0.15)';
+    status.style.border = '0.5px solid var(--burnt)';
+    status.style.color = '#f0e6d0';
+    status.textContent = '⚠️ Preencha os campos obrigatórios: nome, WhatsApp, e-mail e descrição.';
     return;
   }
 
-  const msg = encodeURIComponent(
-    `Olá! Vim pelo site da Alexandre Guitars.\n\n` +
-    `Nome: ${name}\n` +
-    `Instrumento: ${inst || 'Não informado'}\n` +
-    `Problema: ${prob || 'Não informado'}`
-  );
-  window.open(`https://wa.me/5511999999999?text=${msg}`, '_blank');
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
 
-  btn.textContent = '✓ Redirecionando para o WhatsApp...';
-  btn.style.background = '#2A7A5A';
-  setTimeout(() => {
-    btn.textContent = 'Enviar pedido de orçamento';
-    btn.style.background = '';
-  }, 3000);
+  try {
+    const res = await fetch('https://formspree.io/f/xdabqpkk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        nome, telefone: tel, email,
+        instrumento: inst || 'Não informado',
+        modelo: modelo || 'Não informado',
+        mensagem: msg,
+        _replyto: email,
+        _subject: 'Novo orçamento — Alexandre Guitars · ' + (inst || 'Instrumento não informado'),
+      })
+    });
+
+    if (res.ok) {
+      status.style.display = 'block';
+      status.style.background = 'rgba(93,202,165,0.12)';
+      status.style.border = '0.5px solid #5DCAA5';
+      status.style.color = '#5DCAA5';
+      status.textContent = '✦ Mensagem enviada! Retorno em até 24 horas.';
+      ['f-nome','f-tel','f-email','f-modelo','f-msg'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('f-inst').selectedIndex = 0;
+      btn.textContent = '✓ Enviado!';
+    } else {
+      throw new Error('Erro no envio');
+    }
+  } catch(e) {
+    // Fallback: abre WhatsApp com os dados
+    status.style.display = 'block';
+    status.style.background = 'rgba(200,81,26,0.12)';
+    status.style.border = '0.5px solid var(--burnt)';
+    status.style.color = '#f0e6d0';
+    status.innerHTML = `⚠️ Erro ao enviar. <a href="https://wa.me/5511993394130?text=${encodeURIComponent('Olá! Quero solicitar um orçamento.\n\nNome: '+nome+'\nInstrumento: '+(inst||'')+' '+(modelo||'')+'\n\n'+msg)}" target="_blank" style="color:var(--amber);">Clique aqui para enviar pelo WhatsApp</a>.`;    btn.textContent = 'Enviar mensagem';
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
