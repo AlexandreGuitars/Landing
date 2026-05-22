@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alexandre Guitars — Passaporte do Instrumento</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc,
+         updateDoc, deleteDoc, arrayUnion, serverTimestamp, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDpXI_RIUwP2pbjl5aEfnrxP5-TYzyMp5c",
+  authDomain: "alexandre-guitars.firebaseapp.com",
+  projectId: "alexandre-guitars",
+  storageBucket: "alexandre-guitars.firebasestorage.app",
+  messagingSenderId: "552134814794",
+  appId: "1:552134814794:web:36d58bef7fc23f4cb5cab3"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── URL PARAM ──
+const urlId = new URLSearchParams(window.location.search).get('id');
+
+// ── STATE ──
+let passaportes = [];
+let editingId   = null;
+
+// ── AUTH ──
+onAuthStateChanged(auth, user => {
+  if (urlId) {
+    // Public view — show passport directly
+    document.getElementById('screen-login').style.display  = 'none';
+    document.getElementById('screen-admin').style.display  = 'none';
+    document.getElementById('screen-public').style.display = 'block';
+    loadPublic(urlId);
+  } else if (user) {
+    document.getElementById('screen-login').style.display  = 'none';
+    document.getElementById('screen-admin').style.display  = 'block';
+    document.getElementById('screen-public').style.display = 'none';
+    document.getElementById('u-email').textContent = user.email;
+    loadAll();
+  } else {
+    document.getElementById('screen-login').style.display  = 'flex';
+    document.getElementById('screen-admin').style.display  = 'none';
+    document.getElementById('screen-public').style.display = 'none';
+  }
+});
+
+window.doLogin = async () => {
+  const e = document.getElementById('l-email').value;
+  const p = document.getElementById('l-pass').value;
+  document.getElementById('l-err').textContent = '';
+  try { await signInWithEmailAndPassword(auth, e, p); }
+  catch { document.getElementById('l-err').textContent = 'E-mail ou senha incorretos.'; }
+};
+window.doLogout = () => signOut(auth);
+
+// ── LOAD ALL (admin) ──
+async function loadAll() {
+  const q = query(collection(db,'passaportes'), orderBy('createdAt','desc'));
+  const snap = await getDocs(q);
+  passaportes = snap.docs.map(d => ({id:d.id,...d.data()}));
+  renderLista();
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('st-total').textContent = passaportes.length;
+  const total = passaportes.reduce((s,p)=>{
+    const svcs = p.servicos||[];
+    return s + svcs.reduce((a,sv)=>a+(sv.valor||0),0);
+  },0);
+  document.getElementById('st-fat').textContent = fmt(total);
+  const recentes = passaportes.filter(p=>{
+    if (!p.updatedAt) return false;
+    const d = p.updatedAt.toDate ? p.updatedAt.toDate() : new Date(p.updatedAt);
+    return (Date.now()-d.getTime()) < 30*24*60*60*1000;
+  }).length;
+  document.getElementById('st-rec').textContent = recentes;
+}
+
+function renderLista() {
+  const el = document.getElementById('lista');
+  if (!passaportes.length) {
+    el.innerHTML = '<div class="empty">Nenhum passaporte criado ainda.</div>';
+    return;
+  }
+  el.innerHTML = passaportes.map(p => {
+    const svcs  = p.servicos||[];
+    const total = svcs.reduce((a,s)=>a+(s.valor||0),0);
+    const lastSvc = svcs.length ? svcs[svcs.length-1] : null;
+    const lastDt  = lastSvc ? lastSvc.data : '--';
+    const pubUrl  = window.location.href.split('?')[0]+'?id='+p.id;
+    return `<div class="pass-row">
+      <div class="pass-icon">${getIcon(p.tipo)}</div>
+      <div class="pass-info">
+        <div class="pass-nome">${p.nomeInstrumento||'Instrumento'}</div>
+        <div class="pass-sub">${p.tipo||'--'} &middot; ${p.marca||''} ${p.modelo||''} &middot; <span style="color:var(--dim)">${p.cliente||'--'}</span></div>
+        <div class="pass-sub">${svcs.length} servico(s) &middot; Ultimo: ${lastDt}</div>
+      </div>
+      <div class="pass-total">${fmt(total)}</div>
+      <div class="pass-actions">
+        <button class="btn-edit" onclick="openEdit('${p.id}')">Editar</button>
+        <button class="btn-link" onclick="copyLink('${pubUrl}')">Copiar link</button>
+        <button class="btn-wa" onclick="sendWA('${p.id}','${p.cliente||''}','${pubUrl}')">WhatsApp</button>
+        <button class="btn-del" onclick="delPass('${p.id}')">x</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── OPEN EDIT ──
+window.openEdit = (id) => {
+  const p = passaportes.find(x=>x.id===id);
+  if (!p) return;
+  editingId = id;
+
+  sv('e-nome',    p.nomeInstrumento);
+  sv('e-cliente', p.cliente);
+  sv('e-tel',     p.telefone);
+  sv('e-tipo',    p.tipo);
+  sv('e-marca',   p.marca);
+  sv('e-modelo',  p.modelo);
+  sv('e-serie',   p.serie);
+  sv('e-ano',     p.ano);
+  sv('e-cor',     p.cor);
+  sv('e-trastes', p.trastes);
+  sv('e-captadores', p.captadores);
+  sv('e-obs',     p.obs);
+
+  renderServicos(p.servicos||[]);
+  document.getElementById('form-title').textContent = 'Editar Passaporte';
+  document.getElementById('btn-save-txt').textContent = 'Salvar alteracoes';
+  showView('form');
+};
+
+window.newPass = () => {
+  editingId = null;
+  document.getElementById('e-form').reset();
+  renderServicos([]);
+  document.getElementById('form-title').textContent = 'Novo Passaporte';
+  document.getElementById('btn-save-txt').textContent = 'Criar passaporte';
+  showView('form');
+};
+
+// ── SAVE ──
+window.savePass = async () => {
+  const nome = document.getElementById('e-nome').value.trim();
+  if (!nome) { toast('Informe o nome do instrumento.','error'); return; }
+
+  const svcs = getServicos();
+  const data = {
+    nomeInstrumento: nome,
+    cliente:    document.getElementById('e-cliente').value.trim(),
+    telefone:   document.getElementById('e-tel').value.trim(),
+    tipo:       document.getElementById('e-tipo').value,
+    marca:      document.getElementById('e-marca').value.trim(),
+    modelo:     document.getElementById('e-modelo').value.trim(),
+    serie:      document.getElementById('e-serie').value.trim(),
+    ano:        document.getElementById('e-ano').value.trim(),
+    cor:        document.getElementById('e-cor').value.trim(),
+    trastes:    document.getElementById('e-trastes').value.trim(),
+    captadores: document.getElementById('e-captadores').value.trim(),
+    obs:        document.getElementById('e-obs').value.trim(),
+    servicos:   svcs,
+    updatedAt:  serverTimestamp(),
+  };
+
+  try {
+    if (editingId) {
+      await updateDoc(doc(db,'passaportes',editingId), data);
+      toast('Passaporte atualizado!');
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db,'passaportes'), data);
+      toast('Passaporte criado!');
+    }
+    await loadAll();
+    showView('lista');
+  } catch(e) { toast('Erro: '+e.message,'error'); }
+};
+
+window.delPass = async id => {
+  if (!confirm('Excluir este passaporte?')) return;
+  await deleteDoc(doc(db,'passaportes',id));
+  await loadAll();
+  toast('Excluido.');
+};
+
+// ── SERVICOS ──
+let tempServicos = [];
+
+function renderServicos(svcs) {
+  tempServicos = JSON.parse(JSON.stringify(svcs));
+  const el = document.getElementById('svcs-list');
+  if (!tempServicos.length) {
+    el.innerHTML = '<div class="svc-empty">Nenhum servico registrado ainda.</div>';
+    return;
+  }
+  el.innerHTML = tempServicos.map((s,i)=>`
+    <div class="svc-item">
+      <div class="svc-header">
+        <div>
+          <div class="svc-nome">${s.nome||'Servico'}</div>
+          <div class="svc-meta">${s.data||'--'} &middot; ${fmt(s.valor||0)}</div>
+        </div>
+        <button class="btn-del-svc" onclick="removeSvc(${i})">x</button>
+      </div>
+      ${s.descricao ? `<div class="svc-desc">${s.descricao}</div>` : ''}
+      ${s.cordas ? `<div class="svc-tag">Cordas: ${s.cordas}</div>` : ''}
+      ${s.acao ? `<div class="svc-tag">Acao: ${s.acao}mm</div>` : ''}
+    </div>`).join('');
+}
+
+function getServicos() {
+  return tempServicos;
+}
+
+window.removeSvc = (i) => {
+  tempServicos.splice(i,1);
+  renderServicos(tempServicos);
+};
+
+window.addSvc = () => {
+  const nome  = document.getElementById('ns-nome').value.trim();
+  if (!nome) { toast('Informe o nome do servico.','error'); return; }
+  const svc = {
+    nome,
+    data:      document.getElementById('ns-data').value||new Date().toLocaleDateString('pt-BR'),
+    valor:     parseFloat(document.getElementById('ns-valor').value)||0,
+    descricao: document.getElementById('ns-desc').value.trim(),
+    cordas:    document.getElementById('ns-cordas').value.trim(),
+    acao:      document.getElementById('ns-acao').value.trim(),
+  };
+  tempServicos.push(svc);
+  renderServicos(tempServicos);
+  // Clear add form
+  ['ns-nome','ns-desc','ns-cordas','ns-acao','ns-valor'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('ns-data').value = '';
+  document.getElementById('add-svc-form').style.display = 'none';
+  toast('Servico adicionado!');
+};
+
+window.toggleAddSvc = () => {
+  const el = document.getElementById('add-svc-form');
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+  if (el.style.display==='block') {
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('ns-data').value = today;
+  }
+};
+
+// ── PUBLIC VIEW ──
+async function loadPublic(id) {
+  try {
+    const snap = await getDoc(doc(db,'passaportes',id));
+    if (!snap.exists()) {
+      document.getElementById('screen-public').innerHTML =
+        '<div style="text-align:center;padding:3rem;font-family:\'Special Elite\',monospace;color:#7A5C3A;">Passaporte nao encontrado.</div>';
+      return;
+    }
+    const p = {id:snap.id,...snap.data()};
+    renderPublic(p);
+  } catch(e) {
+    document.getElementById('screen-public').innerHTML =
+      '<div style="text-align:center;padding:3rem;color:#D85A30;">Erro ao carregar: '+e.message+'</div>';
+  }
+}
+
+function renderPublic(p) {
+  const svcs  = p.servicos||[];
+  const total = svcs.reduce((a,s)=>a+(s.valor||0),0);
+  const icon  = getIcon(p.tipo);
+
+  document.getElementById('screen-public').innerHTML = `
+    <div class="pub-wrap">
+      <!-- HEADER -->
+      <div class="pub-header">
+        <div class="pub-brand">
+          <div class="pub-avatar">${icon}</div>
+          <div>
+            <div class="pub-ag">Alexandre Guitars</div>
+            <div class="pub-ag-sub">G u i t a r s</div>
+          </div>
+        </div>
+        <div class="pub-badge">Passaporte do Instrumento</div>
+      </div>
+
+      <!-- INSTRUMENTO -->
+      <div class="pub-card">
+        <div class="pub-inst-header">
+          <div class="pub-inst-icon">${icon}</div>
+          <div>
+            <div class="pub-inst-nome">${p.nomeInstrumento||'Instrumento'}</div>
+            <div class="pub-inst-sub">${p.tipo||''} &middot; ${p.marca||''} ${p.modelo||''}</div>
+          </div>
+        </div>
+        <div class="pub-fields">
+          ${pubField('Proprietario', p.cliente)}
+          ${pubField('Ano', p.ano)}
+          ${pubField('Cor / Acabamento', p.cor)}
+          ${pubField('No de Serie', p.serie)}
+          ${pubField('Trastes', p.trastes)}
+          ${pubField('Captadores', p.captadores)}
+        </div>
+        ${p.obs ? `<div class="pub-obs"><b>Obs:</b> ${p.obs}</div>` : ''}
+      </div>
+
+      <!-- HISTORICO -->
+      <div class="pub-sec-title">Historico de Servicos</div>
+      ${svcs.length ? svcs.slice().reverse().map((s,i)=>`
+        <div class="pub-svc">
+          <div class="pub-svc-num">${svcs.length - i}</div>
+          <div class="pub-svc-body">
+            <div class="pub-svc-nome">${s.nome||'Servico'}</div>
+            <div class="pub-svc-meta">${s.data||'--'} &middot; ${fmt(s.valor||0)}</div>
+            ${s.descricao ? `<div class="pub-svc-desc">${s.descricao}</div>` : ''}
+            <div class="pub-svc-tags">
+              ${s.cordas ? `<span class="pub-tag">Cordas: ${s.cordas}</span>` : ''}
+              ${s.acao   ? `<span class="pub-tag">Acao: ${s.acao}mm</span>` : ''}
+            </div>
+          </div>
+        </div>`).join('') : '<div class="pub-empty">Nenhum servico registrado ainda.</div>'}
+
+      <!-- TOTAL -->
+      <div class="pub-total-row">
+        <span>Total investido em manutencao</span>
+        <span class="pub-total-val">${fmt(total)}</span>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="pub-footer">
+        <div class="pub-footer-brand">Alexandre Guitars</div>
+        <div class="pub-footer-info">@alexandreguitarsluthieria &middot; (11) 99339-4130</div>
+        <div class="pub-footer-info">contato@alexandreguitars.com.br &middot; Lapa, Sao Paulo</div>
+        <a href="https://wa.me/5511993394130?text=Ola!+Tenho+o+passaporte+do+meu+instrumento+e+quero+agendar+um+servico."
+           class="pub-wa-btn" target="_blank">Agendar servico no WhatsApp</a>
+      </div>
+    </div>`;
+}
+
+function pubField(label, value) {
+  if (!value) return '';
+  return `<div class="pub-field"><div class="pub-field-lbl">${label}</div><div class="pub-field-val">${value}</div></div>`;
+}
+
+// ── UTILS ──
+function getIcon(tipo) {
+  if (!tipo) return '🎸';
+  const t = tipo.toLowerCase();
+  if (t.includes('violao')||t.includes('nylon')||t.includes('aco')) return '🪕';
+  if (t.includes('baixo')) return '🎵';
+  return '🎸';
+}
+
+window.copyLink = (url) => {
+  navigator.clipboard.writeText(url).catch(()=>{});
+  toast('Link copiado!');
+};
+
+window.sendWA = (id, cliente, url) => {
+  const p = passaportes.find(x=>x.id===id);
+  const nome = p ? p.nomeInstrumento : 'instrumento';
+  const msg = `Ola ${cliente}! Segue o passaporte digital do seu ${nome}:\n\n${url}\n\nGuarda esse link — ele tem todo o historico de servicos do seu instrumento. Alexandre Guitars`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+};
+
+window.showView = v => {
+  document.getElementById('view-lista').style.display = v==='lista' ? 'block':'none';
+  document.getElementById('view-form').style.display  = v==='form'  ? 'block':'none';
+  if (v==='lista') loadAll();
+};
+
+function sv(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val||'';
+}
+
+function fmt(v) {
+  return 'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type==='error' ? '#8B0000':'#2A7A5A';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --burnt:#C8511A;--amber:#E8890A;--blk:#1a0500;
+  --bg:#0C0702;--surf:#1a1008;--surf2:#231508;
+  --cream:#F0E6D0;--dim:#B89A70;--muted:#7A5C3A;
+  --b2:#3E2410;--border:#2E1A08;--green:#5DCAA5;
+}
+body{background:var(--bg);color:var(--cream);font-family:'Libre Baskerville',Georgia,serif;min-height:100vh;}
+
+/* LOGIN */
+#screen-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+.lbox{background:var(--surf);border:0.5px solid var(--b2);border-radius:12px;padding:2.5rem;width:100%;max-width:360px;text-align:center;}
+.lbox-name{font-family:'Special Elite',monospace;font-size:26px;color:var(--cream);letter-spacing:0.04em;}
+.lbox-sub{font-family:'Special Elite',monospace;font-size:11px;color:var(--burnt);letter-spacing:0.2em;margin-bottom:1.5rem;}
+.lf{margin-bottom:12px;text-align:left;}
+.lf label{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.16em;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;}
+.lf input{width:100%;background:var(--bg);border:0.5px solid var(--b2);border-radius:4px;color:var(--cream);font-size:14px;padding:10px 12px;outline:none;transition:border-color 0.15s;font-family:'Libre Baskerville',serif;}
+.lf input:focus{border-color:var(--burnt);}
+.l-err{font-size:12px;color:#ff6b6b;min-height:16px;margin-bottom:8px;}
+.btn-login{width:100%;background:var(--burnt);color:var(--cream);font-family:'Special Elite',monospace;font-size:13px;letter-spacing:0.12em;padding:13px;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+.btn-login:hover{background:var(--amber);color:var(--blk);}
+
+/* ADMIN */
+#screen-admin{display:none;}
+.topbar{background:var(--surf);border-bottom:0.5px solid var(--b2);padding:0 1.5rem;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.tb-brand{font-family:'Special Elite',monospace;font-size:15px;color:var(--cream);display:flex;align-items:center;gap:6px;}
+.tb-brand span{color:var(--burnt);}
+.btn-out{background:transparent;border:0.5px solid var(--b2);color:var(--muted);font-family:'Special Elite',monospace;font-size:10px;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.btn-out:hover{border-color:var(--burnt);color:var(--burnt);}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:1rem 1.5rem 0;}
+.st{background:var(--surf);border:0.5px solid var(--b2);border-radius:8px;padding:0.875rem;}
+.st-l{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.16em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.st-v{font-family:'Special Elite',monospace;font-size:20px;color:var(--cream);}
+.st-v.g{color:var(--green);}
+
+/* LISTA */
+#view-lista{padding:1rem 1.5rem;}
+.toolbar{display:flex;justify-content:flex-end;margin-bottom:1rem;}
+.btn-new{background:var(--burnt);color:var(--cream);font-family:'Special Elite',monospace;font-size:11px;letter-spacing:0.1em;padding:9px 18px;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+.btn-new:hover{background:var(--amber);color:var(--blk);}
+.pass-row{background:var(--surf);border:0.5px solid var(--b2);border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:36px 1fr auto auto;gap:12px;align-items:center;margin-bottom:8px;transition:border-color 0.15s;}
+.pass-row:hover{border-color:var(--burnt);}
+.pass-icon{font-size:22px;text-align:center;}
+.pass-nome{font-size:14px;font-weight:700;color:var(--cream);margin-bottom:2px;}
+.pass-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.pass-total{font-family:'Special Elite',monospace;font-size:14px;color:var(--cream);white-space:nowrap;}
+.pass-actions{display:flex;gap:5px;flex-wrap:wrap;}
+.btn-edit{background:transparent;border:0.5px solid var(--b2);color:var(--dim);font-family:'Special Elite',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.btn-edit:hover{border-color:var(--burnt);color:var(--burnt);}
+.btn-link{background:transparent;border:0.5px solid var(--b2);color:var(--amber);font-family:'Special Elite',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.btn-link:hover{background:rgba(232,137,10,0.1);}
+.btn-wa{background:transparent;border:0.5px solid #25D366;color:#25D366;font-family:'Special Elite',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.btn-wa:hover{background:rgba(37,211,102,0.1);}
+.btn-del{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;transition:color 0.15s;}
+.btn-del:hover{color:#ff6b6b;}
+.empty{text-align:center;padding:3rem;font-family:'Special Elite',monospace;font-size:13px;color:var(--muted);}
+
+/* FORM */
+#view-form{padding:1rem 1.5rem;max-width:820px;}
+.fhdr{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;}
+.btn-back{background:transparent;border:0.5px solid var(--b2);color:var(--muted);font-family:'Special Elite',monospace;font-size:11px;padding:6px 12px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.btn-back:hover{border-color:var(--burnt);color:var(--burnt);}
+.ftitle{font-family:'Special Elite',monospace;font-size:18px;color:var(--cream);letter-spacing:0.04em;}
+.fsec{margin-bottom:1.25rem;}
+.sec-l{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.2em;color:var(--burnt);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.sec-l::after{content:'';flex:1;height:0.4px;background:var(--b2);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+.fg label{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.13em;color:var(--muted);text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{background:var(--bg);border:0.5px solid var(--b2);border-radius:4px;color:var(--cream);font-size:13px;padding:8px 11px;outline:none;font-family:'Libre Baskerville',serif;transition:border-color 0.15s;width:100%;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--burnt);}
+.fg select option{background:var(--surf);}
+.fg textarea{resize:vertical;min-height:60px;}
+
+/* SERVICES */
+.svc-item{background:var(--bg);border:0.5px solid var(--b2);border-radius:6px;padding:12px;margin-bottom:6px;}
+.svc-header{display:flex;justify-content:space-between;align-items:flex-start;}
+.svc-nome{font-size:13px;font-weight:700;color:var(--cream);}
+.svc-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.svc-desc{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.5;}
+.svc-tag{display:inline-block;font-family:'Special Elite',monospace;font-size:9px;color:var(--burnt);border:0.5px solid var(--b2);border-radius:3px;padding:2px 7px;margin-top:5px;margin-right:4px;}
+.btn-del-svc{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;transition:color 0.15s;}
+.btn-del-svc:hover{color:#ff6b6b;}
+.svc-empty{font-family:'Special Elite',monospace;font-size:12px;color:var(--muted);padding:1rem 0;text-align:center;}
+.btn-add-svc{width:100%;background:transparent;border:0.5px dashed var(--b2);color:var(--muted);font-family:'Special Elite',monospace;font-size:11px;letter-spacing:0.08em;padding:8px;border-radius:5px;cursor:pointer;transition:all 0.15s;margin-top:6px;}
+.btn-add-svc:hover{border-color:var(--burnt);color:var(--burnt);}
+#add-svc-form{display:none;background:var(--surf2);border:0.5px solid var(--b2);border-radius:6px;padding:14px;margin-top:8px;}
+.btn-confirm-svc{background:var(--green);color:var(--blk);font-family:'Special Elite',monospace;font-size:11px;letter-spacing:0.08em;padding:9px 18px;border:none;border-radius:5px;cursor:pointer;margin-top:8px;transition:all 0.2s;}
+.btn-confirm-svc:hover{background:#1D9E75;color:white;}
+
+/* FORM ACTIONS */
+.f-actions{display:flex;gap:8px;margin-top:1rem;}
+.btn-save{flex:1;background:var(--burnt);color:var(--cream);font-family:'Special Elite',monospace;font-size:12px;letter-spacing:0.1em;padding:12px;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+.btn-save:hover{background:var(--amber);color:var(--blk);}
+
+/* ── PUBLIC VIEW ── */
+#screen-public{display:none;background:var(--bg);min-height:100vh;padding:2rem 1.25rem 4rem;}
+.pub-wrap{max-width:580px;margin:0 auto;}
+.pub-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+.pub-brand{display:flex;align-items:center;gap:12px;}
+.pub-avatar{width:44px;height:44px;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,#E8890A 0%,#C8511A 50%,#1a0500 100%);border:1.5px solid var(--burnt);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.pub-ag{font-family:'Special Elite',monospace;font-size:16px;color:var(--cream);letter-spacing:0.04em;}
+.pub-ag-sub{font-family:'Special Elite',monospace;font-size:9px;color:var(--burnt);letter-spacing:0.2em;}
+.pub-badge{font-family:'Special Elite',monospace;font-size:9px;letter-spacing:0.14em;color:var(--burnt);border:0.5px solid var(--b2);padding:4px 12px;border-radius:3px;}
+
+.pub-card{background:var(--surf);border:0.5px solid var(--b2);border-radius:10px;overflow:hidden;margin-bottom:1.25rem;}
+.pub-inst-header{display:flex;align-items:center;gap:14px;padding:1.25rem;border-bottom:0.5px solid var(--b2);}
+.pub-inst-icon{font-size:32px;}
+.pub-inst-nome{font-family:'Special Elite',monospace;font-size:20px;color:var(--cream);letter-spacing:0.04em;}
+.pub-inst-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+.pub-fields{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0.5rem;}
+.pub-field{padding:10px 12px;border-bottom:0.3px solid var(--border);}
+.pub-field:nth-last-child(-n+2){border-bottom:none;}
+.pub-field-lbl{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.16em;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+.pub-field-val{font-size:13px;color:var(--cream);}
+.pub-obs{padding:12px 16px;font-size:12px;color:var(--dim);line-height:1.6;border-top:0.5px solid var(--b2);}
+
+.pub-sec-title{font-family:'Special Elite',monospace;font-size:9px;letter-spacing:0.22em;color:var(--burnt);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.pub-sec-title::after{content:'';flex:1;height:0.4px;background:var(--b2);}
+
+.pub-svc{display:flex;gap:14px;background:var(--surf);border:0.5px solid var(--b2);border-radius:8px;padding:14px;margin-bottom:8px;}
+.pub-svc-num{width:28px;height:28px;border-radius:50%;background:var(--burnt);color:var(--cream);font-family:'Special Elite',monospace;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pub-svc-body{flex:1;}
+.pub-svc-nome{font-size:14px;font-weight:700;color:var(--cream);margin-bottom:3px;}
+.pub-svc-meta{font-size:11px;color:var(--muted);}
+.pub-svc-desc{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.6;}
+.pub-svc-tags{margin-top:6px;}
+.pub-tag{display:inline-block;font-family:'Special Elite',monospace;font-size:9px;color:var(--burnt);border:0.5px solid var(--b2);border-radius:3px;padding:2px 7px;margin-right:4px;}
+.pub-empty{font-family:'Special Elite',monospace;font-size:12px;color:var(--muted);text-align:center;padding:1.5rem;background:var(--surf);border:0.5px solid var(--b2);border-radius:8px;margin-bottom:1rem;}
+
+.pub-total-row{display:flex;justify-content:space-between;align-items:center;background:var(--surf);border:0.5px solid var(--b2);border-radius:8px;padding:14px 16px;margin-bottom:1.25rem;}
+.pub-total-row span:first-child{font-size:12px;color:var(--muted);}
+.pub-total-val{font-family:'Special Elite',monospace;font-size:18px;color:var(--amber);}
+
+.pub-footer{text-align:center;padding-top:1.25rem;border-top:0.5px solid var(--border);}
+.pub-footer-brand{font-family:'Special Elite',monospace;font-size:16px;color:var(--cream);letter-spacing:0.06em;}
+.pub-footer-info{font-size:11px;color:var(--muted);margin-top:4px;font-family:'Special Elite',monospace;letter-spacing:0.06em;}
+.pub-wa-btn{display:inline-flex;align-items:center;gap:8px;background:#25D366;color:white;font-family:'Special Elite',monospace;font-size:12px;letter-spacing:0.08em;padding:12px 24px;border-radius:6px;text-decoration:none;margin-top:1.25rem;transition:all 0.2s;}
+.pub-wa-btn:hover{background:#1DA851;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;color:#fff;font-family:'Special Elite',monospace;font-size:12px;padding:10px 18px;border-radius:6px;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+@media(max-width:600px){
+  .stats{grid-template-columns:1fr 1fr 1fr;}
+  .g2,.g3{grid-template-columns:1fr;}
+  .pass-row{grid-template-columns:28px 1fr;gap:8px;}
+  .pass-total,.pass-actions{grid-column:2;}
+  .pub-fields{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login">
+  <div class="lbox">
+    <div class="lbox-name">Alexandre</div>
+    <div class="lbox-sub">G u i t a r s</div>
+    <div style="font-size:13px;color:var(--dim);margin-bottom:1.5rem;">Passaporte do Instrumento</div>
+    <div class="lf"><label>E-mail</label><input type="email" id="l-email" placeholder="contato@alexandreguitars.com.br" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="lf"><label>Senha</label><input type="password" id="l-pass" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="l-err" id="l-err"></div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin">
+  <div class="topbar">
+    <div class="tb-brand"><span>&#10022;</span> Alexandre Guitars &mdash; Passaportes</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-family:'Special Elite',monospace;font-size:10px;color:var(--muted);" id="u-email"></span>
+      <button class="btn-out" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="st"><div class="st-l">Passaportes</div><div class="st-v" id="st-total">0</div></div>
+    <div class="st"><div class="st-l">Ativos (30 dias)</div><div class="st-v g" id="st-rec">0</div></div>
+    <div class="st"><div class="st-l">Total faturado</div><div class="st-v g" id="st-fat">R$ 0,00</div></div>
+  </div>
+
+  <!-- LISTA -->
+  <div id="view-lista">
+    <div style="padding:1rem 1.5rem 0;">
+      <div class="toolbar"><button class="btn-new" onclick="newPass()">+ Novo passaporte</button></div>
+    </div>
+    <div style="padding:0 1.5rem;" id="lista"></div>
+  </div>
+
+  <!-- FORM -->
+  <div id="view-form" style="display:none;">
+    <div class="fhdr">
+      <button class="btn-back" onclick="showView('lista')">&larr; Voltar</button>
+      <div class="ftitle" id="form-title">Novo Passaporte</div>
+    </div>
+
+    <form id="e-form" onsubmit="event.preventDefault()">
+
+      <!-- CLIENTE -->
+      <div class="fsec">
+        <div class="sec-l">1. Cliente</div>
+        <div class="g2">
+          <div class="fg"><label>Nome do cliente *</label><input type="text" id="e-cliente" placeholder="Nome completo"></div>
+          <div class="fg"><label>WhatsApp</label><input type="tel" id="e-tel" placeholder="(11) 99339-4130"></div>
+        </div>
+      </div>
+
+      <!-- INSTRUMENTO -->
+      <div class="fsec">
+        <div class="sec-l">2. Instrumento</div>
+        <div class="fg"><label>Nome do instrumento *</label><input type="text" id="e-nome" placeholder="Ex: Minha Tagima Preta"></div>
+        <div class="g3">
+          <div class="fg">
+            <label>Tipo</label>
+            <select id="e-tipo">
+              <option value="">Selecione...</option>
+              <option>Guitarra eletrica</option>
+              <option>Violao aco</option>
+              <option>Violao nylon</option>
+              <option>Baixo eletrico</option>
+              <option>Semi-acustica</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="fg"><label>Marca</label><input type="text" id="e-marca" placeholder="Ex: Tagima"></div>
+          <div class="fg"><label>Modelo</label><input type="text" id="e-modelo" placeholder="Ex: TG-530"></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>Ano</label><input type="text" id="e-ano" placeholder="Ex: 2019"></div>
+          <div class="fg"><label>Cor / Acabamento</label><input type="text" id="e-cor" placeholder="Ex: Preta fosca"></div>
+          <div class="fg"><label>No de Serie</label><input type="text" id="e-serie" placeholder="Se houver"></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Trastes (tipo / bitola)</label><input type="text" id="e-trastes" placeholder="Ex: Jescar FW43080-NS"></div>
+          <div class="fg"><label>Captadores</label><input type="text" id="e-captadores" placeholder="Ex: Humbucker / Single coil"></div>
+        </div>
+        <div class="fg"><label>Observacoes gerais</label><textarea id="e-obs" placeholder="Caracteristicas especiais, historico anterior, etc."></textarea></div>
+      </div>
+
+      <!-- SERVICOS -->
+      <div class="fsec">
+        <div class="sec-l">3. Historico de Servicos</div>
+        <div id="svcs-list"></div>
+        <button type="button" class="btn-add-svc" onclick="toggleAddSvc()">+ Adicionar servico</button>
+
+        <div id="add-svc-form">
+          <div class="g2">
+            <div class="fg"><label>Nome do servico *</label><input type="text" id="ns-nome" placeholder="Ex: Setup completo"></div>
+            <div class="fg"><label>Data</label><input type="date" id="ns-data"></div>
+          </div>
+          <div class="g2">
+            <div class="fg"><label>Valor (R$)</label><input type="number" id="ns-valor" placeholder="0,00" min="0" step="0.01"></div>
+            <div class="fg"><label>Bitola / Marca das cordas</label><input type="text" id="ns-cordas" placeholder="Ex: Ernie Ball 10-46"></div>
+          </div>
+          <div class="fg"><label>Acao final (mm)</label><input type="text" id="ns-acao" placeholder="Ex: 1.8 grave / 1.5 agudo"></div>
+          <div class="fg"><label>Descricao do servico</label><textarea id="ns-desc" placeholder="Descreva o que foi feito, pecas trocadas, observacoes..."></textarea></div>
+          <button type="button" class="btn-confirm-svc" onclick="addSvc()">Confirmar servico</button>
+        </div>
+      </div>
+
+    </form>
+
+    <div class="f-actions">
+      <button class="btn-save" onclick="savePass()"><span id="btn-save-txt">Criar passaporte</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC -->
+<div id="screen-public"></div>
+
+<div class="toast" id="toast"></div>
+</body>
+</html>
