@@ -28,20 +28,13 @@
       font-size: 16px;
       line-height: normal;
       text-decoration: none;
-    }
-
-    .container {
       position: relative;
-      background-color: rgb(242, 228, 192);
-      width: 100%;
-      max-width: 1536px;
-      margin: 0 auto;
-      color: rgb(13, 7, 3);
-      line-height: 25.6px;
+      overflow-x: hidden;
     }
 
-    /* Background decorative elements */
-    .bg-pattern {
+    /* Background decorative patterns */
+    body::before {
+      content: '';
       position: fixed;
       top: 0;
       left: 0;
@@ -49,7 +42,7 @@
       bottom: 0;
       pointer-events: none;
       mix-blend-mode: multiply;
-      z-index: 0;
+      z-index: -1;
       background-image: 
         repeating-linear-gradient(1deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 2px, rgba(139, 94, 42, 0.008) 2px, rgba(139, 94, 42, 0.008) 3px),
         repeating-linear-gradient(91deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 8px, rgba(139, 94, 42, 0.004) 8px, rgba(139, 94, 42, 0.004) 9px),
@@ -59,7 +52,8 @@
         radial-gradient(130% 130%, rgba(0, 0, 0, 0) 50%, rgba(139, 94, 42, 0.09) 100%);
     }
 
-    .noise-texture {
+    body::after {
+      content: '';
       position: fixed;
       top: 0;
       left: 0;
@@ -67,14 +61,17 @@
       bottom: 0;
       pointer-events: none;
       mix-blend-mode: multiply;
-      z-index: 0;
+      z-index: -1;
       opacity: 0.035;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)'/%3E%3C/svg%3E");
       background-size: 280px 280px;
     }
 
-    .content-wrapper {
+    .container {
       position: relative;
+      width: 100%;
+      max-width: 1536px;
+      margin: 0 auto;
       z-index: 1;
     }
 
@@ -88,6 +85,8 @@
       min-height: 639.2px;
       margin: 0 auto;
       padding: 0 40px;
+      position: relative;
+      z-index: 1;
     }
 
     .logo-section {
@@ -96,7 +95,6 @@
       width: 480px;
       margin-top: 40px;
       margin-bottom: 60px;
-      z-index: 1;
     }
 
     .logo-section img {
@@ -119,7 +117,6 @@
       max-width: 500px;
       margin-left: auto;
       margin-right: auto;
-      z-index: 1;
       position: relative;
     }
 
@@ -132,7 +129,6 @@
       background-color: rgba(13, 7, 3, 0.1);
       margin-left: auto;
       margin-right: auto;
-      z-index: 1;
     }
 
     .grid-container {
@@ -143,7 +139,6 @@
       margin-bottom: 100px;
       text-align: center;
       position: relative;
-      z-index: 1;
     }
 
     .grid-item {
@@ -152,6 +147,7 @@
       align-items: center;
       justify-content: flex-start;
       padding: 0 20px;
+      position: relative;
     }
 
     .section-label {
@@ -163,8 +159,6 @@
       letter-spacing: 6px;
       line-height: 16px;
       opacity: 0.6;
-      position: relative;
-      z-index: 1;
     }
 
     .section-title {
@@ -173,8 +167,6 @@
       letter-spacing: -0.3px;
       line-height: 48.3px;
       margin-bottom: 16px;
-      position: relative;
-      z-index: 1;
     }
 
     .section-description {
@@ -187,8 +179,6 @@
       font-size: 14px;
       line-height: 25.2px;
       max-width: 280px;
-      position: relative;
-      z-index: 1;
     }
 
     .link-button {
@@ -200,13 +190,15 @@
       line-height: 19.2px;
       font-family: 'Cormorant Garamond', serif;
       display: inline-block;
-      padding-bottom: 6px;
-      z-index: 1;
+      padding: 10px 20px 16px 20px;
       cursor: pointer;
       text-decoration: none;
       color: rgb(13, 7, 3);
       transition: all 0.3s ease;
-      border-bottom: 0.8px solid transparent;
+      border: none;
+      background: transparent;
+      z-index: 10;
+      position: relative;
     }
 
     .link-button::after {
@@ -215,7 +207,7 @@
       height: 1px;
       width: 0;
       left: 50%;
-      bottom: -6px;
+      bottom: 0px;
       background-color: rgb(212, 168, 67);
       transition: width 0.3s ease, left 0.3s ease;
     }
@@ -223,6 +215,10 @@
     .link-button:hover::after {
       width: 100%;
       left: 0;
+    }
+
+    .link-button:active {
+      opacity: 0.8;
     }
 
     footer {
@@ -238,6 +234,7 @@
       padding-bottom: 60px;
       border-top: 0.8px solid rgba(13, 7, 3, 0.1);
       z-index: 1;
+      position: relative;
     }
 
     .footer-grid {
@@ -257,7 +254,6 @@
       justify-content: center;
       text-transform: uppercase;
       position: relative;
-      z-index: 1;
     }
 
     .footer-text {
@@ -278,7 +274,7 @@
       font-size: 10px;
       letter-spacing: 2px;
       line-height: 16px;
-      z-index: 1;
+      z-index: 2;
       opacity: 0.4;
       pointer-events: none;
     }
@@ -347,53 +343,48 @@
   </style>
 </head>
 <body>
-  <div class="bg-pattern"></div>
-  <div class="noise-texture"></div>
-  
   <div class="container">
-    <div class="content-wrapper">
-      <main>
-        <div class="logo-section">
-          <img src="logo.png" alt="Alexandre logo">
+    <main>
+      <div class="logo-section">
+        <img src="logo.png" alt="Alexandre logo">
+      </div>
+
+      <p class="tagline">Precisão na oficina. Permanência no Archive.</p>
+
+      <div class="divider"></div>
+
+      <div class="grid-container">
+        <div class="grid-item">
+          <p class="section-label">AG-OF</p>
+          <h1 class="section-title">Oficina</h1>
+          <p class="section-description">Construção, regulagem e restauração de instrumentos.</p>
+          <a href="https://alexandreguitars.com.br/" class="link-button" target="_blank">Entrar</a>
         </div>
 
-        <p class="tagline">Precisão na oficina. Permanência no Archive.</p>
-
-        <div class="divider"></div>
-
-        <div class="grid-container">
-          <div class="grid-item">
-            <p class="section-label">AG-OF</p>
-            <h1 class="section-title">Oficina</h1>
-            <p class="section-description">Construção, regulagem e restauração de instrumentos.</p>
-            <a href="#" class="link-button">Entrar</a>
-          </div>
-
-          <div class="grid-item">
-            <p class="section-label">AG-AR</p>
-            <h1 class="section-title">Archive</h1>
-            <p class="section-description">Documentação histórica e preservação da cultura.</p>
-            <a href="#" class="link-button">Entrar</a>
-          </div>
+        <div class="grid-item">
+          <p class="section-label">AG-AR</p>
+          <h1 class="section-title">Archive</h1>
+          <p class="section-description">Documentação histórica e preservação da cultura.</p>
+          <a href="http://archive.alexandreguitars.com.br/" class="link-button" target="_blank">Entrar</a>
         </div>
-      </main>
+      </div>
+    </main>
 
-      <footer>
-        <div class="footer-grid">
-          <div class="footer-item">
-            <p class="footer-text">EST. MMXXIV</p>
-          </div>
-          <div class="footer-item">
-            <p class="footer-text">São Paulo, Brasil</p>
-          </div>
-          <div class="footer-item">
-            <p class="footer-text">Archive Edition</p>
-          </div>
+    <footer>
+      <div class="footer-grid">
+        <div class="footer-item">
+          <p class="footer-text">EST. MMXXIV</p>
         </div>
-      </footer>
+        <div class="footer-item">
+          <p class="footer-text">São Paulo, Brasil</p>
+        </div>
+        <div class="footer-item">
+          <p class="footer-text">Archive Edition</p>
+        </div>
+      </div>
+    </footer>
 
-      <div class="volume-indicator">Volume I</div>
-    </div>
+    <div class="volume-indicator">Volume I</div>
   </div>
 </body>
 </html>
